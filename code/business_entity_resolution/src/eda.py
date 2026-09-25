@@ -134,22 +134,34 @@ def field_quality(frames: dict[str, pd.DataFrame]) -> list[str]:
     return lines
 
 
-def country_agreement(pairs: pd.DataFrame, lookup: dict[str, tuple[str, str, str]]) -> list[str]:
+def build_id_country(frames) -> pd.Series:
+    """entity_id -> country as a Series with a hash index.
+
+    A plain dict over 12.5M records costs several GB; an indexed Series with the country
+    as a category is a few hundred MB and joins in C.
+    """
+    parts = [
+        pd.Series(
+            f["country"].astype(str).values,
+            index=f["entity_id"].astype(str).values,
+        )
+        for f in frames
+    ]
+    out = pd.concat(parts)
+    return out.astype("category")
+
+
+def country_agreement(pairs: pd.DataFrame, id_country: pd.Series) -> list[str]:
     """Do true matches share a country? Decides if same_country may gate blocking."""
-    same = cross = unknown = 0
-    cross_examples: list[str] = []
-    for s1, other in zip(pairs["s1"], pairs["other"]):
-        a, b = lookup.get(s1), lookup.get(other)
-        if a is None or b is None:
-            unknown += 1
-            continue
-        if a[2] == b[2]:
-            same += 1
-        else:
-            cross += 1
-            if len(cross_examples) < 5:
-                cross_examples.append(f"{s1}({a[2]}) ~ {other}({b[2]})")
+    left = id_country.reindex(pairs["s1"].values).astype(object).values
+    right = id_country.reindex(pairs["other"].values).astype(object).values
+
+    known = pd.notna(left) & pd.notna(right)
+    same = int((known & (left == right)).sum())
+    cross = int((known & (left != right)).sum())
+    unknown = int((~known).sum())
     total = same + cross
+
     lines = ["#### 5. Do true matches cross country?", ""]
     lines += [
         f"- same country: **{same:,}** ({_pct(same, total)})",
@@ -157,9 +169,15 @@ def country_agreement(pairs: pd.DataFrame, lookup: dict[str, tuple[str, str, str
         f"- unresolved IDs: {unknown:,}",
     ]
     if cross:
-        lines.append(f"- examples: {'; '.join(cross_examples)}")
+        idx = np.nonzero(known & (left != right))[0][:5]
+        ex = [
+            f"{pairs['s1'].iloc[i]}({left[i]}) ~ {pairs['other'].iloc[i]}({right[i]})"
+            for i in idx
+        ]
+        lines.append(f"- examples: {'; '.join(ex)}")
     verdict = (
-        "safe to block within country (costs ~0 recall)"
+        "blocking within country costs ~0 recall -- partition the problem by country label "
+        "(a same_country constraint, not a hard-coded country list)"
         if total and cross / total < 0.001
         else "do NOT block on country; use same_country only as a feature"
     )
@@ -188,21 +206,42 @@ def _jac(x: set, y: set) -> float:
 
 
 def blocking_recall(
-    pairs: pd.DataFrame, lookup: dict[str, tuple[str, str, str]], probe: int, seed: int
+    pairs: pd.DataFrame, frames, probe: int, seed: int
 ) -> list[str]:
-    """Per-key recall on true pairs: the recall ceiling each blocking key can deliver."""
+    """Per-key recall on true pairs: the recall ceiling each blocking key can deliver.
+
+    Samples the pairs first, then materializes record text for those IDs only, so peak
+    memory tracks the probe size rather than the 12.5M-record corpus.
+    """
     rng = np.random.default_rng(seed)
     if len(pairs) > probe:
-        idx = rng.choice(len(pairs), size=probe, replace=False)
-        sub = pairs.iloc[np.sort(idx)]
+        idx = np.sort(rng.choice(len(pairs), size=probe, replace=False))
+        sub = pairs.iloc[idx]
     else:
         sub = pairs
 
+    needed = set(sub["s1"].astype(str)) | set(sub["other"].astype(str))
+    lookup: dict[str, tuple[str, str, str]] = {}
+    for f in frames:
+        ids = f["entity_id"].astype(str)
+        hit = f[ids.isin(needed)]
+        lookup.update(
+            zip(
+                hit["entity_id"].astype(str),
+                zip(
+                    hit["business_name"].astype(str),
+                    hit["business_address"].astype(str),
+                    hit["country"].astype(str),
+                ),
+            )
+        )
+
     resolved = [
-        (lookup[s1], lookup[o])
-        for s1, o in zip(sub["s1"], sub["other"])
-        if s1 in lookup and o in lookup
+        (lookup[a], lookup[b])
+        for a, b in zip(sub["s1"].astype(str), sub["other"].astype(str))
+        if a in lookup and b in lookup
     ]
+    del lookup
     n = len(resolved)
     lines = [
         f"#### 6. Blocking-key recall on true pairs (probe n={n:,})",
@@ -213,14 +252,10 @@ def blocking_recall(
         "| blocking key | recall on true pairs |",
         "| --- | --- |",
     ]
-    hits = {}
     for key, fn in BLOCKING_KEYS.items():
         h = sum(1 for a, b in resolved if fn(a, b))
-        hits[key] = h
         lines.append(f"| {key} | **{_pct(h, n)}** |")
 
-    # Candidate blocking schemes: each is the union of keys, i.e. a pair survives if ANY
-    # key fires. The cheapest scheme clearing ~99% is the one to build.
     unions = {
         "name token OR name trigram": ["share >=1 name token", "share a name trigram"],
         "name trigram OR addr token": ["share a name trigram", "share >=1 addr token"],
@@ -236,15 +271,14 @@ def blocking_recall(
         fns = [BLOCKING_KEYS[k] for k in keys]
         u = sum(1 for a, b in resolved if any(f(a, b) for f in fns))
         lines.append(f"| {label} | **{_pct(u, n)}** |")
-        if label == "name trigram OR addr token":
+        if label == "name token OR addr token":
             best_fns = fns
     lines.append("")
 
-    fns = best_fns
-    miss = [(a, b) for a, b in resolved if not any(f(a, b) for f in fns)]
+    miss = [(a, b) for a, b in resolved if not any(f(a, b) for f in best_fns)]
     if miss:
         lines += [
-            f"Pairs that survive NO key in 'name trigram OR addr token' "
+            f"Pairs that survive NO key in 'name token OR addr token' "
             f"({len(miss):,} of {n:,} = {_pct(len(miss), n)}) -- these bound recall:",
             "",
         ]
@@ -301,27 +335,18 @@ def run(paths, args) -> list[str]:
         scope = "full train"
 
     pairs = gt_pairs(gt)
-
-    # id -> (name, address, country) for every record we might touch.
-    lookup: dict[str, tuple[str, str, str]] = {}
-    for frame in (s1, s2, s3):
-        lookup.update(
-            zip(
-                frame["entity_id"].astype(str),
-                zip(
-                    frame["business_name"].astype(str),
-                    frame["business_address"].astype(str),
-                    frame["country"].astype(str),
-                ),
-            )
-        )
+    frames = (s1, s2, s3)
 
     lines = [f"**scope:** {scope}", ""]
     lines += check_one_s1_per_record(pairs)
     lines += match_count_stats(gt, pairs)
     lines += coverage_stats(pairs, s2, s3)
     lines += field_quality({"train_s1": s1, "train_s2": s2, "train_s3": s3})
-    lines += country_agreement(pairs, lookup)
-    lines += blocking_recall(pairs, lookup, probe, seed)
+
+    id_country = build_id_country(frames)
+    lines += country_agreement(pairs, id_country)
+    del id_country
+
+    lines += blocking_recall(pairs, frames, probe, seed)
     lines += token_frequency(s1, probe, seed)
     return lines
