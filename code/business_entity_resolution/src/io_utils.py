@@ -43,6 +43,32 @@ def read_source(path: str | Path, nrows: int | None = None, backend: str = "pyar
     )
 
 
+def read_table(path: str | Path, columns: list[str] | None = None):
+    """Arrow-native read for full-data passes: all string, never null, no quoting.
+
+    Holding the data as a pyarrow Table and using pyarrow.compute avoids materializing
+    millions of Python str objects, which is what pushed p1b to 9.3 GB.
+    """
+    import pyarrow as pa
+    import pyarrow.csv as pacsv
+
+    with open(path, encoding="utf-8") as f:
+        header = f.readline().rstrip("\n").split("\t")
+    return pacsv.read_csv(
+        path,
+        read_options=pacsv.ReadOptions(block_size=64 << 20),
+        parse_options=pacsv.ParseOptions(
+            delimiter="\t", quote_char=False, double_quote=False, escape_char=False
+        ),
+        convert_options=pacsv.ConvertOptions(
+            column_types={c: pa.string() for c in header},
+            strings_can_be_null=False,
+            quoted_strings_can_be_null=False,
+            include_columns=columns,
+        ),
+    )
+
+
 def count_rows(path: str | Path) -> int:
     """Data rows (header excluded), streamed so nothing large is held in memory."""
     with open(path, "rb") as f:

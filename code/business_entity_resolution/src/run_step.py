@@ -19,6 +19,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from config import Paths, add_common_args, paths_from_args, set_seed  # noqa: E402
 import io_utils  # noqa: E402
+from report import md_table  # noqa: E402
 import eda  # noqa: E402
 
 REPORT_MAX_LINES = 200
@@ -28,20 +29,6 @@ def peak_ram_gb() -> float:
     """maxrss is bytes on macOS and kilobytes on Linux."""
     rss = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
     return rss / 1024**3 if sys.platform == "darwin" else rss / 1024**2
-
-
-def md_table(df, max_cell: int = 60) -> str:
-    """Small markdown table. Hand-rolled so reports never depend on `tabulate`."""
-    def cell(v: str) -> str:
-        v = "" if v is None else str(v)
-        v = v.replace("|", "\\|").replace("\n", " ")
-        return (v[: max_cell - 1] + "\u2026") if len(v) > max_cell else v
-
-    cols = [cell(c) for c in df.columns]
-    rows = [[cell(v) for v in row] for row in df.astype(str).itertuples(index=False)]
-    out = ["| " + " | ".join(cols) + " |", "| " + " | ".join("---" for _ in cols) + " |"]
-    out += ["| " + " | ".join(r) + " |" for r in rows]
-    return "\n".join(out)
 
 
 def step_p1a_check(paths: Paths, args: argparse.Namespace) -> list[str]:
@@ -80,14 +67,20 @@ def step_p1_eda(paths: Paths, args: argparse.Namespace) -> list[str]:
 
 # Canonical ids are p1a_check / p1b_eda. Older ids stay as aliases so a notebook or
 # report already pointing at one keeps working.
+def step_p1c_eda(paths: Paths, args: argparse.Namespace) -> list[str]:
+    """Deep EDA; full tables go to reports/p1c_eda/*.csv for notebooks/01_eda.ipynb."""
+    return eda.run_deep(paths, args)
+
+
 STEPS = {
     "p1a_check": step_p1a_check,
     "p1b_eda": step_p1_eda,
+    "p1c_eda": step_p1c_eda,
     # aliases
     "p0_load": step_p1a_check,
     "p1_eda": step_p1_eda,
 }
-CANONICAL = ("p1a_check", "p1b_eda")
+CANONICAL = ("p1a_check", "p1b_eda", "p1c_eda")
 
 
 def main() -> int:
@@ -99,6 +92,8 @@ def main() -> int:
         help=f"Step id to run. Available: {', '.join(CANONICAL)}.",
     )
     parser.add_argument("--no-report", action="store_true", help="Print only; skip reports/<id>.md.")
+    parser.add_argument("--report-dir", type=Path, default=None,
+                        help="Where reports/<id>.md and step tables go (default: <repo>/reports).")
     parser.add_argument("--probe", type=int, default=200_000,
                         help="Sample size for the per-pair blocking probes (p1_eda).")
     add_common_args(parser)
@@ -119,6 +114,9 @@ def main() -> int:
     set_seed(args.seed)
     paths = paths_from_args(args)
     paths.ensure_dirs()
+    report_dir = Path(args.report_dir) if args.report_dir else paths.reports
+    report_dir.mkdir(parents=True, exist_ok=True)
+    args.report_dir_resolved = report_dir
 
     started = time.perf_counter()
     body = STEPS[args.step](paths, args)
@@ -141,9 +139,9 @@ def main() -> int:
     print(text)
 
     if not args.no_report:
-        out = paths.reports / f"{args.step}.md"
+        out = report_dir / f"{args.step}.md"
         out.write_text(text, encoding="utf-8")
-        print(f"wrote {out.relative_to(paths.repo_root)}")
+        print(f"wrote {out}")
     return 0
 
 
