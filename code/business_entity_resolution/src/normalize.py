@@ -9,6 +9,7 @@ codes, landmarks and street words are therefore detected by pattern only.
 from __future__ import annotations
 
 import re
+from dataclasses import dataclass
 from functools import lru_cache
 
 from unidecode import unidecode
@@ -98,16 +99,48 @@ def normalize_name(s: str) -> str:
     """Lowercase ASCII name with legal suffixes and punctuation removed."""
     if not s:
         return ""
-    s = _ascii_fold(s).lower()
-    s = s.replace("&", " and ")
-    s = _collapse_acronyms(s)
-    s = _PUNCT.sub(" ", s)
-    tokens = _merge_single_letters([t for t in _WS.split(s) if t])
-    kept = [t for t in tokens if t not in LEGAL_SUFFIXES]
-    # A name that is *only* a legal suffix keeps its tokens rather than becoming empty.
-    if not kept:
-        kept = tokens
-    return " ".join(kept)
+    return split_name(s).core
+
+
+@dataclass(frozen=True)
+class NameParts:
+    """A business name split into the identity-bearing part and its legal suffixes."""
+
+    core: str
+    suffixes: tuple[str, ...]
+
+    @property
+    def legal_suffix(self) -> str:
+        return " ".join(self.suffixes)
+
+    def __bool__(self) -> bool:
+        return bool(self.core)
+
+
+@lru_cache(maxsize=1 << 18)
+def split_name(s: str) -> NameParts:
+    """Split into core_name + legal_suffix using CLAUDE.md's dictionary.
+
+    Suffixes are recognised anywhere, not just at the end: this data has "LLC Moncada
+    Learning Center" and "OF India Pvt Ltd" alike. If every token is a suffix the name is
+    kept whole as the core, since dropping it would erase the record's only signal.
+    """
+    if not s:
+        return NameParts("", ())
+    t = _ascii_fold(s).lower().replace("&", " and ")
+    t = _collapse_acronyms(t)
+    t = _PUNCT.sub(" ", t)
+    tokens = _merge_single_letters([x for x in _WS.split(t) if x])
+    core = [x for x in tokens if x not in LEGAL_SUFFIXES]
+    sufs = tuple(x for x in tokens if x in LEGAL_SUFFIXES)
+    if not core:
+        return NameParts(" ".join(tokens), sufs)
+    return NameParts(" ".join(core), sufs)
+
+
+def core_name(s: str) -> str:
+    """The name with legal suffixes removed -- what we index and compare."""
+    return split_name(s).core
 
 
 def name_tokens(s: str) -> set[str]:
@@ -167,11 +200,89 @@ def address_tokens(s: str) -> set[str]:
     return {t for t in _TOKEN.findall(norm) if len(t) > 1}
 
 
+_NUM_RE = re.compile(r"(?<![0-9])([0-9]{3} [0-9]{3}|[0-9]{5,6})(?![0-9])")
+_UNIT_BEFORE = re.compile(
+    r"(unit|apt|apartment|suite|ste|flat|plot|bldg|building|box|bp|#|no\.?|h\.?\s?no\.?)"
+    r"\s*[:#-]?\s*$", re.I)
+# Street-type words, after ADDRESS_ABBREV expansion. A digit run followed by one of these
+# is a house number, not a postal code.
+STREET_WORDS = {
+    "road", "street", "avenue", "boulevard", "drive", "lane", "court", "place", "square",
+    "way", "trail", "circle", "terrace", "parkway", "highway", "close", "walk", "row",
+    "rue", "chemin", "impasse", "faubourg", "allee", "quai", "route", "voie", "passage",
+    "marg", "nagar", "colony", "sector", "phase", "block", "cross", "main", "galli", "gali",
+}
+
+
+def _segment_tail(s: str, end: int) -> str:
+    """Text from `end` to the next comma -- the rest of this address component."""
+    nxt = s.find(",", end)
+    return s[end:] if nxt < 0 else s[end:nxt]
+
+
+def postal_codes_in(addr: str) -> dict[str, str]:
+    """Postal-code candidates as {code: kind}, by pattern and position only.
+
+    Most 5/6-digit runs in this data are house numbers. The discriminator, verified
+    against real records in p1c, is what FOLLOWS the number inside its comma segment:
+
+        "11244 Westfall Road"  -> street word follows      -> house number
+        "11940 72"             -> only digits follow       -> house + road number
+        "33000 BORDEAUX"       -> a plain word follows     -> postal code + city
+        "59100, ROUBAIX"       -> segment ends             -> postal code
+
+    plus positional rules for unit numbers ("Unit 10207"), zero-padded house numbers
+    ("00109", "003801"), a run opening the whole address ("11024, S/F, Gali Peepal Wali"),
+    and "ddd ddd" house+road pairs ("602 723").
+
+    Never conditioned on the country label: one rule set covers ZIP, PIN and code postal.
+    """
+    s = (addr or "").strip()
+    out: dict[str, str] = {}
+    for m in _NUM_RE.finditer(s):
+        raw = m.group(1)
+        code = raw.replace(" ", "")
+        before, after = s[: m.start()], s[m.end():]
+
+        # Glued to a preceding letter: part of another token ("BP60105").
+        if before and (before[-1].isalpha() or before[-1] == "-"):
+            continue
+        if _UNIT_BEFORE.search(before):
+            continue
+        if code[0] == "0":                       # zero-padded house number
+            continue
+        if m.start() == 0:                       # opens the whole address
+            continue
+
+        seg_start = before.rfind(",") + 1
+        opens_segment = before[seg_start:].strip() == ""
+        if " " in raw and opens_segment:         # "602 723" house + road
+            continue
+
+        tail = _segment_tail(s, m.end()).strip(" ,.-")
+        if tail:
+            words = {ADDRESS_ABBREV.get(w, w) for w in _TOKEN.findall(tail.lower())}
+            if words & STREET_WORDS:             # "11244 Westfall Road"
+                continue
+            if not any(c.isalpha() for c in tail):  # "11940 72"
+                continue
+        out[code] = "6-digit" if len(code) == 6 else "5-digit"
+    return out
+
+
+def naive_codes_in(addr: str) -> set[str]:
+    """Any 5/6-digit or 'ddd ddd' run -- kept only to show how misleading it is."""
+    return {m.group(1).replace(" ", "") for m in _NUM_RE.finditer(addr or "")}
+
+
 def postal_codes(s: str) -> set[str]:
-    """5-6 digit runs, by pattern. Never conditioned on the country label."""
-    if not s:
-        return set()
-    return set(_POSTAL.findall(_ascii_fold(s)))
+    """Just the codes, for callers that do not care which format matched."""
+    return set(postal_codes_in(s))
+
+
+def naive_codes_in(addr: str) -> set[str]:
+    """Any 5/6-digit or 'ddd ddd' run -- kept only to show how misleading it is."""
+    return {m.group(1).replace(" ", "") for m in _NUM_RE.finditer(addr or "")}
 
 
 def street_numbers(s: str) -> set[str]:

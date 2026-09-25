@@ -22,6 +22,7 @@ import io_utils  # noqa: E402
 from report import md_table  # noqa: E402
 import eda  # noqa: E402
 import splits as splits_mod  # noqa: E402
+import run_baseline  # noqa: E402
 
 REPORT_MAX_LINES = 200
 
@@ -91,8 +92,14 @@ def step_p2a_splits(paths: Paths, args: argparse.Namespace) -> list[str]:
     return lines
 
 
+def step_p2b_baseline(paths: Paths, args: argparse.Namespace) -> list[str]:
+    """Name-only TF-IDF baseline: CV + LOCO on train, then write the test submission."""
+    return run_baseline.run(paths, args)
+
+
 STEPS = {
     "p1a_check": step_p1a_check,
+    "p2b_baseline": step_p2b_baseline,
     "p2a_splits": step_p2a_splits,
     "p1b_eda": step_p1_eda,
     "p1c_eda": step_p1c_eda,
@@ -100,7 +107,7 @@ STEPS = {
     "p0_load": step_p1a_check,
     "p1_eda": step_p1_eda,
 }
-CANONICAL = ("p1a_check", "p1b_eda", "p1c_eda", "p2a_splits")
+CANONICAL = ("p1a_check", "p1b_eda", "p1c_eda", "p2a_splits", "p2b_baseline")
 
 
 def main() -> int:
@@ -114,6 +121,15 @@ def main() -> int:
     parser.add_argument("--no-report", action="store_true", help="Print only; skip reports/<id>.md.")
     parser.add_argument("--report-dir", type=Path, default=None,
                         help="Where reports/<id>.md and step tables go (default: <repo>/reports).")
+    parser.add_argument("--top-k", type=int, default=5, help="Candidates kept per S1 (p2b).")
+    parser.add_argument("--max-df", type=float, default=0.01,
+                        help="Drop trigrams above this document frequency (p2b).")
+    parser.add_argument("--cv-sample", type=int, default=200_000,
+                        help="S1 entities used to tune the threshold (p2b); 0 = all.")
+    parser.add_argument("--skip-test", action="store_true",
+                        help="Tune and score only; do not run test inference (p2b).")
+    parser.add_argument("--jobs", type=int, default=1,
+                        help="Parallel search workers (p2b). Use the core count on Kaggle.")
     parser.add_argument("--probe", type=int, default=200_000,
                         help="Sample size for the per-pair blocking probes (p1_eda).")
     add_common_args(parser)

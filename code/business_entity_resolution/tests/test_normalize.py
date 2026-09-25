@@ -9,6 +9,8 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
+import pytest
+
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 import normalize as nz  # noqa: E402
@@ -80,27 +82,112 @@ class TestAddresses:
         assert nz.address_tokens("") == set()
 
 
-class TestPatternsAreCountryIndependent:
-    """Postal extraction must work on all three formats with no country argument."""
+class TestPostalCodes:
+    """15 real addresses from the p1c samples, France included.
 
-    def test_us_zip_france_cp_india_pin(self):
-        assert nz.postal_codes("MORGANTON, NC 28655") == {"28655"}       # US ZIP-5
-        assert nz.postal_codes("75001 Paris") == {"75001"}                # FR code postal
-        assert nz.postal_codes("Gurugram, HR 122016") == {"122016"}       # IN PIN-6
+    Every expectation was verified against the actual record. The discriminator is what
+    FOLLOWS the digit run inside its comma segment -- a street word or bare digits mean a
+    house number, a plain word or segment end mean a postal code. No rule looks at the
+    country label, which is what lets one rule set cover ZIP, PIN and code postal.
+    """
 
-    def test_long_digit_runs_are_not_postal(self):
-        assert nz.postal_codes("KH NO. -570134567890") == set()
+    HOUSE_NUMBERS = [
+        ("OH, 11244 Westfall Road, Chillicothe", "US house number after reordering"),
+        ("011244 Westfall Road, Frankfort, Ohio", "zero-padded house number"),
+        ("3801 Aw Grimes Boulevard, Unit 10207, Round Rock, TX", "unit number"),
+        ("602 723, Bldg Residence, Crittenden County, KY", "house + road number"),
+        ("CHEROKEE, AL, 11940 72", "house number + numeric road"),
+        ("00109 BOULEVARD DES BELGES, NANTES", "French zero-padded house number"),
+        ("27 R DU BALLET, BP60105, NANTES, Pays de la Loire", "PO box glued to letters"),
+        ("11024, S/F, Gali Peepal Wali, Pahar Ganj", "Indian house number opening address"),
+    ]
+    POSTAL_CODES = [
+        ("MORGANTON, NC 28655", {"28655"}, "US ZIP-5"),
+        ("Gurugram, Haryana 122016", {"122016"}, "India PIN-6"),
+        ("Kothrud, Pune 411 038", {"411038"}, "India PIN as 'ddd ddd'"),
+        ("195 R. DE LA MACKELLERIE, 59100, ROUBAIX, Nord", {"59100"}, "FR code, segment ends"),
+        ("N°2 RUE DES AUGUSTINS, 33000 BORDEAUX, BORDEAUX, Gironde", {"33000"}, "FR code + city"),
+        ("8 R. DE L'ESCAUT, 59000 LILLE, LILLE, Nord", {"59000"}, "FR code + city"),
+        ("46 BD VINCENT GACHE, 44000, NANTES, Loire-Atlantique", {"44000"}, "FR code"),
+    ]
+
+    @pytest.mark.parametrize("addr,why", HOUSE_NUMBERS)
+    def test_house_and_unit_numbers_are_not_postal_codes(self, addr, why):
+        assert nz.postal_codes_in(addr) == {}, why
+
+    @pytest.mark.parametrize("addr,want,why", POSTAL_CODES)
+    def test_genuine_codes_are_found(self, addr, want, why):
+        assert set(nz.postal_codes_in(addr)) == want, why
+
+    def test_french_codes_survive_the_us_house_number_rule(self):
+        """'33000 BORDEAUX' and '11244 Westfall Road' have the same shape.
+
+        Only the segment tail separates them, so this is the case that would regress if
+        the rule were ever simplified back to a positional one.
+        """
+        assert set(nz.postal_codes_in("N°2 RUE, 33000 BORDEAUX, Gironde")) == {"33000"}
+        assert nz.postal_codes_in("OH, 11244 Westfall Road") == {}
+
+    def test_kind_is_reported(self):
+        assert nz.postal_codes_in("Pune 411038") == {"411038": "6-digit"}
+        assert nz.postal_codes_in("Austin, TX 78701") == {"78701": "5-digit"}
+
+    def test_postal_codes_returns_just_the_codes(self):
+        assert nz.postal_codes("MORGANTON, NC 28655") == {"28655"}
+
+    def test_naive_extractor_is_fooled(self):
+        assert nz.naive_codes_in("OH, 11244 Westfall Road") == {"11244"}
+
+    def test_signature_takes_no_country(self):
+        import inspect
+
+        for fn in (nz.normalize_name, nz.normalize_address, nz.postal_codes,
+                   nz.postal_codes_in, nz.street_numbers, nz.split_name):
+            assert "country" not in inspect.signature(fn).parameters, fn.__name__
 
     def test_street_numbers_exclude_postal_length(self):
         nums = nz.street_numbers("1795 Westchester Drive, High Point, NC 27262")
         assert "1795" in nums and "27262" not in nums
 
-    def test_signature_takes_no_country(self):
-        import inspect
 
-        for fn in (nz.normalize_name, nz.normalize_address, nz.postal_codes, nz.street_numbers):
-            params = inspect.signature(fn).parameters
-            assert "country" not in params, f"{fn.__name__} must not branch on country"
+class TestNameSplit:
+    """core_name + legal_suffix, using CLAUDE.md's dictionary."""
+
+    @pytest.mark.parametrize("raw,core,sufs", [
+        ("Acme Pvt Ltd", "acme", ("pvt", "ltd")),
+        ("Zephay Labs Inc", "zephay labs", ("inc",)),
+        ("Fractales Amis Groupe S.A.S", "fractales amis groupe", ("sas",)),
+        ("Marina Ecole France Sarl", "marina ecole france", ("sarl",)),
+        ("LLC Moncada Léarning Center", "moncada learning center", ("llc",)),
+        ("International South Consultants Private Ltd",
+         "international south consultants", ("private", "ltd")),
+        ("Defense Ecole SAS", "defense ecole", ("sas",)),
+        ("SCI Ptit Àmicale", "ptit amicale", ("sci",)),
+        ("B+ Retail Inc", "b retail", ("inc",)),
+        ("wilfordhancock.com", "wilfordhancock com", ()),
+    ])
+    def test_split(self, raw, core, sufs):
+        parts = nz.split_name(raw)
+        assert parts.core == core
+        assert parts.suffixes == sufs
+
+    def test_suffix_only_name_keeps_its_tokens(self):
+        parts = nz.split_name("Ltd")
+        assert parts.core == "ltd" and parts.suffixes == ("ltd",)
+
+    def test_core_name_matches_normalize_name(self):
+        for raw in ("Acme Pvt Ltd", "राम मार्केटिंग प्राइवेट लिमिटेड", "B & C, Inc", ""):
+            assert nz.core_name(raw) == nz.normalize_name(raw)
+
+    def test_suffix_differences_do_not_change_the_core(self):
+        assert nz.core_name("Acme Corp") == nz.core_name("Acme Corporation") == "acme"
+
+    def test_digits_are_kept(self):
+        assert "7" in nz.core_name("L 7 Prime Hudson")
+        assert nz.core_name("#2 Transport") == "2 transport"
+
+    def test_legal_suffix_string(self):
+        assert nz.split_name("Acme Pvt Ltd").legal_suffix == "pvt ltd"
 
 
 class TestSimilarityHelpers:

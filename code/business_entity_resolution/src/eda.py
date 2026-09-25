@@ -1006,46 +1006,8 @@ def name_vs_address_signal(d: EdaData, pairs: pa.Table, n: int = 50_000, seed: i
     return {"evidence_name_vs_address": table}, facts
 
 
-_NUM_RE = re.compile(r"(?<![0-9])([0-9]{3} [0-9]{3}|[0-9]{5,6})(?![0-9])")
-_UNIT_BEFORE = re.compile(
-    r"(unit|apt|apartment|suite|ste|flat|plot|#|no\.?|h\.?\s?no\.?)\s*[:#-]?\s*$", re.I)
-
-
-def postal_codes_in(addr: str) -> dict[str, str]:
-    """Postal-code candidates as {code: kind}, detected by pattern and position only.
-
-    In this data most 5/6-digit runs are NOT postal codes. The rules below come from
-    inspecting true pairs whose "codes" disagreed:
-      * followed by a word or number -> house number ("11244 Westfall Road", "11940 72")
-      * after unit/apt/plot/no       -> unit number ("Unit 10207")
-      * 6 digits with a leading 0    -> zero-padded house number ("003801")
-      * 'ddd ddd' opening a segment  -> house + road number ("602 723, ...")
-    French codes written before the city ("75001 Paris") are lost to the first rule;
-    they are rare here.
-    """
-    s = (addr or "").strip()
-    out: dict[str, str] = {}
-    for m in _NUM_RE.finditer(s):
-        raw = m.group(1)
-        code = raw.replace(" ", "")
-        before, after = s[: m.start()], s[m.end():]
-        seg_start = before.rfind(",") + 1
-        opens_segment = before[seg_start:].strip() == ""
-        if re.match(r"\s*[^\W_]", after):
-            continue
-        if _UNIT_BEFORE.search(before):
-            continue
-        if len(code) == 6 and code[0] == "0":
-            continue
-        if " " in raw and opens_segment:
-            continue
-        out[code] = "6-digit" if len(code) == 6 else "5-digit"
-    return out
-
-
-def naive_codes_in(addr: str) -> set[str]:
-    """Any 5/6-digit or 'ddd ddd' run -- kept only to show how misleading it is."""
-    return {m.group(1).replace(" ", "") for m in _NUM_RE.finditer(addr or "")}
+postal_codes_in = nz.postal_codes_in
+naive_codes_in = nz.naive_codes_in
 
 
 def postal_agreement(d: EdaData, pairs: pa.Table, n: int = 200_000, seed: int = SEED):
