@@ -21,6 +21,7 @@ from config import Paths, add_common_args, paths_from_args, set_seed  # noqa: E4
 import io_utils  # noqa: E402
 from report import md_table  # noqa: E402
 import eda  # noqa: E402
+import splits as splits_mod  # noqa: E402
 
 REPORT_MAX_LINES = 200
 
@@ -72,15 +73,34 @@ def step_p1c_eda(paths: Paths, args: argparse.Namespace) -> list[str]:
     return eda.run_deep(paths, args)
 
 
+def step_p2a_splits(paths: Paths, args: argparse.Namespace) -> list[str]:
+    """Build artifacts/folds.parquet: 5-fold grouped CV plus leave-one-country-out."""
+    folds = splits_mod.make_folds(paths, seed=args.seed, force=args.force)
+    cache = paths.artifacts / "folds.parquet"
+
+    checks = splits_mod.check_no_leakage(folds)
+    lines = [f"Folds: `{cache.relative_to(paths.repo_root)}` "
+             f"({len(folds):,} S1 entities, {splits_mod.N_SPLITS} folds, seed {args.seed})", ""]
+    lines += ["#### Leakage checks", "", md_table(checks), ""]
+    lines += ["#### Fold sizes and singleton rate", "", md_table(splits_mod.fold_summary(folds)), ""]
+    lines += ["#### Leave-one-country-out", "", md_table(splits_mod.loco_summary(folds)), ""]
+
+    if not checks["pass"].all():
+        failed = checks.loc[~checks["pass"], "check"].tolist()
+        raise RuntimeError(f"fold validation failed: {failed}")
+    return lines
+
+
 STEPS = {
     "p1a_check": step_p1a_check,
+    "p2a_splits": step_p2a_splits,
     "p1b_eda": step_p1_eda,
     "p1c_eda": step_p1c_eda,
     # aliases
     "p0_load": step_p1a_check,
     "p1_eda": step_p1_eda,
 }
-CANONICAL = ("p1a_check", "p1b_eda", "p1c_eda")
+CANONICAL = ("p1a_check", "p1b_eda", "p1c_eda", "p2a_splits")
 
 
 def main() -> int:
