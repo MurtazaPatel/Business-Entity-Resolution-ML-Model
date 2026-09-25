@@ -78,23 +78,43 @@ def step_p1_eda(paths: Paths, args: argparse.Namespace) -> list[str]:
     return eda.run(paths, args)
 
 
-# p1a_check is the canonical id; p0_load stays as an alias so the existing report and
-# any notebook already pointing at it keep working.
+# Canonical ids are p1a_check / p1b_eda. Older ids stay as aliases so a notebook or
+# report already pointing at one keeps working.
 STEPS = {
     "p1a_check": step_p1a_check,
+    "p1b_eda": step_p1_eda,
+    # aliases
     "p0_load": step_p1a_check,
     "p1_eda": step_p1_eda,
 }
+CANONICAL = ("p1a_check", "p1b_eda")
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Run one pipeline step.")
-    parser.add_argument("--step", required=True, choices=sorted(STEPS), help="Step id to run.")
+    parser.add_argument(
+        "--step",
+        required=True,
+        metavar="ID",
+        help=f"Step id to run. Available: {', '.join(CANONICAL)}.",
+    )
     parser.add_argument("--no-report", action="store_true", help="Print only; skip reports/<id>.md.")
     parser.add_argument("--probe", type=int, default=200_000,
                         help="Sample size for the per-pair blocking probes (p1_eda).")
     add_common_args(parser)
     args = parser.parse_args()
+
+    if args.step not in STEPS:
+        import difflib
+
+        # Prefer a canonical id over an alias when suggesting.
+        near = difflib.get_close_matches(args.step, CANONICAL, n=1, cutoff=0.4) or \
+            difflib.get_close_matches(args.step, STEPS, n=1, cutoff=0.5)
+        hint = f"  Did you mean '{near[0]}'?" if near else ""
+        parser.error(
+            f"unknown step '{args.step}'.{hint}\n"
+            f"  Available: {', '.join(CANONICAL)}"
+        )
 
     set_seed(args.seed)
     paths = paths_from_args(args)
