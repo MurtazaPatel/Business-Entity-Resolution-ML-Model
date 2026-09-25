@@ -1,0 +1,8 @@
+category,records,share %
+duplicate (same name + address),6710,52.3
+partial variant,3148,24.5
+name variant at same address,2331,18.2
+"no address, same name",484,3.8
+"no address, name differs",70,0.5
+"same name, different address (branch?)",66,0.5
+different name and address,21,0.2

@@ -1,0 +1,102 @@
+entity,role,id,name,address,name sim,addr sim,category
+1,S1,S1-519116695,Federal Cardiology,"2855 Back Road, Franklin Furnace, OH",,,
+1,S2,S2-668019184,Federal  (Cardiology),"2855 BACK RD, FRANKLIN FURNACE, OH",100.0,100.0,duplicate (same name + address)
+1,S3,S3-220705931,FEDERAL CARDIOLOGY,"2855 Back Road, Franlkin Furnace, Ohio",100.0,94.3,duplicate (same name + address)
+1,S3,S3-356813733,Mirariza Formerly Federal Cardiology,"2855 Back Road, Franklin Furnace, OH",100.0,100.0,duplicate (same name + address)
+2,S1,S1-963372105,Rudram Solution Private Limited,"Delhi, East Delhi, Ist Floor G-83, Laxmi Nagar, New Delhi, 106",,,
+2,S2,S2-715684527,Rudram Limited Private Solution,"106, IST FLOOR G-83, LAXMI NAGAR, NEW DELHI, Delhi",100.0,100.0,duplicate (same name + address)
+2,S2,S2-802839815,Rudram Solution Private,"106, IST FLOOR G-83, LAXMI NAGAR, NEW DELHI, Delhi",100.0,100.0,duplicate (same name + address)
+2,S3,S3-808638885,Rudram-Solution Private Limited,"106, Mandawali Fazalpur, DL",100.0,42.9,"same name, different address (branch?)"
+3,S1,S1-991878061,Black Investment Private Limited,"Rinkoo Apts 93 V P Rdvile Parce West, Mumbai, Maharashtra",,,
+3,S2,S2-941303651,ब्लैक इन्वेस्टमेंट प्राइवेट लिमिटेड,"MUMBAI, RINKOO APTS 93 V P RDVILE PARCE WEST, Maharashtra",55.6,100.0,name variant at same address
+3,S3,S3-121584814,Black Investment [Private],"Rinkoo Apts 93 V P Rdvile Parce West, Mumbai, महाराष्ट्र",100.0,93.7,duplicate (same name + address)
+3,S3,S3-556312973,Black Private Limited Services Enterprises,,47.6,0.0,"no address, name differs"
+3,S3,S3-612821773,Black Investment Private-Limited,"Rinkoo Apts 93 V P Rdvile Parce West, Mumbai, MH",100.0,96.6,duplicate (same name + address)
+3,S3,S3-647061102,BLACK INVESTMENT PRIVATE LIMITED,"Rinkoo Apts 93 V P Rdvile Parce West, Mumbai, MH",100.0,96.6,duplicate (same name + address)
+3,S3,S3-871801609,Black Ínvestment Private Limited,"Rinkoo Apts 93 V P Rdvile Parce West, Mumbai, MH",100.0,96.6,duplicate (same name + address)
+4,S1,S1-627328952,Kiran Shanti,"House No 218, A/P Chincholi Tal Shirala, Sangli, Maharashtra",,,
+4,S2,S2-40983928,KIRAN SHANTI (LTD),"Maharashtra, HOUSE NO 218, A/P CHINCHOLI TAL SHIRALA, SANGLI",100.0,100.0,duplicate (same name + address)
+4,S2,S2-437008073,Kiran Shani,"HOUSE NO 218, A/P CHINCHOLI TAL SHIRALA, SANGLI, Maharashtra",95.7,100.0,duplicate (same name + address)
+4,S2,S2-887158461,Kiran Stai,"HOUSE NO 218, A/P CHINCHOLI TAL SHIRALA, SANGLI, Maharashtra",81.8,100.0,name variant at same address
+4,S3,S3-753201861,Kiran-Shanti,"Sangli, House No G-218, MH",100.0,90.2,duplicate (same name + address)
+5,S1,S1-136727464,Thibert Ready,"MN, 37613 Little Dead Horse Road, Marcell",,,
+5,S2,S2-141653006,thibertready.com,"##37613 LITTLE DEAD HORSE ROAD, MARCELL, MN",55.2,100.0,name variant at same address
+5,S3,S3-181639282,Wexcira aka Thibert Ready,"37613 Little Dead Horse Road, Marcell, MN",100.0,100.0,duplicate (same name + address)
+5,S3,S3-970449392,Thibert Retaiy #57618,"37613 Little Dead Horse Road, Minnesota, Marcell",72.7,96.0,name variant at same address
+6,S1,S1-298420573,Complete Cornerstone Lincoln,"35 Belridge Road, New Britain, CT",,,
+6,S2,S2-841679153,COMPLETE LINCOLN  CORNERSTONE,"35 BELRIDGE RD, NEW BRITAIN, CT",100.0,100.0,duplicate (same name + address)
+6,S3,S3-452975466,Complete Cornerstone,"35 Belridge Road, NEW Britain, Connecticut",100.0,94.9,duplicate (same name + address)
+6,S3,S3-848500299,Iriveo DBA: Complete Cornerstone Lincoln,"35 Belridge Road, New Britain, CT",100.0,100.0,duplicate (same name + address)
+7,S1,S1-221180084,Ziraendra Services Limited,"313, Paradise Tower Gokhale Road, Naupada, Thane, Maharashtra",,,
+7,S2,S2-235685528,ZIRAENDRASERVICES.COM,"313/7, PARADISE TOWER GOKHALE ROAD, NAUPADA, Maharashtra",56.4,98.1,name variant at same address
+7,S2,S2-411548684,Ziraendra Services Ltd,"313/7, PARADISE TOWER GOKHALE ROAD, NAUPADA, Maharashtra",100.0,98.1,duplicate (same name + address)
+7,S2,S2-493149757,ZIRAENDRA SERVICES,,100.0,0.0,"no address, same name"
+7,S2,S2-707210199,Ziraendra Sevrinecs Limited,"महाराष्ट्र, 313/7, PARADISE TOWER GOKHALE ROAD, NAUPADA",86.5,86.5,partial variant
+7,S3,S3-626295358,Ziraendra Seaices Limited,"Block F-297 313, Naupada, Thane, MH",91.4,69.4,partial variant
+7,S3,S3-835362445,Ziraendra Límited Services,"Block F-297 313, Paradise Tower Gokhale Road, Thane, Naupada, MH",100.0,88.2,partial variant
+8,S1,S1-28785197,Super Engineering Private Limited,"Flat B1/1101 Sno 340/3 Pebbles Patilnagar Nr Ranwara, Pune, Maharashtra",,,
+8,S2,S2-186100079,सुपर इंजीनियरिंग प्राइवेट लिमिटेड,"DOOR NO 709 FLTA B1/1101 SNO 340/3 PEBBLES PATILNAGAR NR RANWARA, POONA, PUNE, Maharashtra",44.4,96.4,name variant at same address
+8,S3,S3-106628253,Super Engineering,"Flat B1/1101 Sno 340/3 Pebbles Patilnagar Nr Ranwara, Pune, महाराष्ट्र",100.0,95.1,duplicate (same name + address)
+8,S3,S3-202879855,Shri Super Engineering Prívate,"Flat B1/1101 Sno 340/3 Pebbles Patilnagar Nr Ranwara, Pune, MH",100.0,97.5,duplicate (same name + address)
+8,S3,S3-551050414,सुपर इंजीनियरिंग प्राइवेट लिमिटेड,"Flat B1/1101 Sno 340/3 Pebbles Patilnagar Nr Ranwara, Pune, महाराष्ट्र",44.4,95.1,name variant at same address
+8,S3,S3-841577350,Super Private Engineering Limited,"Flat B1/1101 Sno 340/3 Pebbles Patilnagar Nr Ranwara, Pune, MH",100.0,97.5,duplicate (same name + address)
+9,S1,S1-55821850,Young Animal Hospital,"1509 Princeton Lane, Unit B, New Bern, NC",,,
+9,S2,S2-413515312,Young-Animal Hospital,"1509 Princeton Ln, NEW BERN, NC",100.0,94.5,duplicate (same name + address)
+9,S2,S2-806396087,Young Animal Hosptal,"1509 PRINCETON LN, NEW BERN, NC",97.6,94.5,duplicate (same name + address)
+9,S3,S3-149953755,young animal hospital Enterprises,,100.0,0.0,"no address, same name"
+9,S3,S3-699391165,Young Ania Hospital,"1509 Princeton Lane, # B, New Bern, North Carolina",95.0,88.2,partial variant
+9,S3,S3-734693962,Evotavo doing business as Young Animal Hospital,"1509 Princeton Lane, Unit B, New Bern, NC",100.0,100.0,duplicate (same name + address)
+10,S1,S1-614212995,Universal Properties Limited,"Ag11, Ag12 1/2 Portion, G.F.Conscient One Sec-109, Railway Road, Gurgaon, Haryana",,,
+10,S2,S2-224976143,यूनिवर्सल प्रॉपर्टीज लिमिटेड,"AG11, AG12 1/2 PORTION, G.F.CONSCIENT ONE SEC-109, RAILWAY ROAD, GURGAON, Haryana",58.8,100.0,name variant at same address
+10,S3,S3-537620652,Universal Properties,"Ag12 1/2 Portion, G.F.Conscient One Sec-109, Gurgaon, Haryana, Ag11, Railway Road",100.0,100.0,duplicate (same name + address)
+10,S3,S3-849763287,Universal Properties  Limited,"Ag11, Railway Road, HR",100.0,91.9,duplicate (same name + address)
+11,S1,S1-318495156,Wolk & Bartlett Gaming LLC,"1104 Glenbridge Circle, Thousand Oaks, CA",,,
+11,S2,S2-181621155,Wolk & Bartlett Gaming (LLC),"Glenbridge Cir, THOUSAND OAKS, CA",100.0,93.1,duplicate (same name + address)
+11,S2,S2-376587598,wolkbartlettgaming.com,"1104 GLENBRIDGE CIRCLE, CA, THOUSAND OAKS",65.2,100.0,name variant at same address
+11,S3,S3-781519238,bw.com,"1104 Glebnridge Cir, Westlake Village, California",20.0,60.5,partial variant
+12,S1,S1-991766982,Battersby Etf Inc.,"27312 135th Avenue, Kent, WA",,,
+12,S2,S2-191742302,BATTERSBYETF.COM,"KENT, 27312 135TH AVE, WA",82.8,100.0,name variant at same address
+12,S2,S2-253417725,Battersby Inc Services,"27312 135TH AVENUE, KENT, WA",81.8,100.0,name variant at same address
+12,S2,S2-477164798,BATTERSBY INC. SERVICES,"27312 135TH AVENUE, KENT, WA",81.8,100.0,name variant at same address
+12,S3,S3-108716062,Battersby Etf Inc,"27312-27314 135th Ave, Kent, Washington",100.0,93.9,duplicate (same name + address)
+12,S3,S3-56428484,battersbyetf.com,"27312-27314 135th Ave, Kent, Washington",82.8,93.9,name variant at same address
+12,S3,S3-653034043,#battersbyetf,"27312-27314 135th Avenue, Kent, Washington",96.0,93.9,duplicate (same name + address)
+13,S1,S1-84408222,Morris Select Mckinley Inc,"2206 Juliesse Avenue, Sacramento, CA",,,
+13,S2,S2-181203249,Morris Sélect Mckinley,"2206D JULIESSE AVE, SACRAMENTO, CA",100.0,98.6,duplicate (same name + address)
+13,S2,S2-988241692,MORRIS SELECT MCKINLEY INC,"CA, 2206D JULIESSE AVE, ARDEN-ARCADE",100.0,81.7,partial variant
+13,S3,S3-365442704,Morris Select Mckinley,,100.0,0.0,"no address, same name"
+13,S3,S3-618212429,Morris Shtletc  Mckinley Inc,"2206 Juliesse Ave, Sacramento, California",88.9,95.4,name variant at same address
+13,S3,S3-805798913,Morris Select,"2206 Juliesse Avenue, Sacramento, California",100.0,95.4,duplicate (same name + address)
+14,S1,S1-533264632,Davoix Inc,"1521 Countyline Street, Unit 136, Fostoria, OH",,,
+14,S3,S3-438830148,Daolx (Inc),"1521 1/2 Countyline Street, Fostoria, Ohio",72.7,89.2,partial variant
+14,S3,S3-489811348,Pyrayuma D.B.A. Davoix Inc,"1521 Countyline Street, Unit 136, Fostoria, OH",100.0,100.0,duplicate (same name + address)
+14,S3,S3-577630605,Davoix.Com,"# 136, Ohio, Countyline St, Fostoria",100.0,92.3,duplicate (same name + address)
+14,S3,S3-875673644,Dávoix-Incorporated,"Countyline St, Unit 136, Fostoria, Ohio",100.0,93.3,duplicate (same name + address)
+15,S1,S1-634231161,Birmingham Youth Star Chiropractic,"1411 12th Street, Birmingham, AL",,,
+15,S2,S2-104837138,Birmingham Youth,"1411 12TH ST, BIRMINGHAM, AL",100.0,100.0,duplicate (same name + address)
+15,S2,S2-400097215,Birmingham Youth  Star Chiropractic,"1411 12TH SOREET, BIRMINGHAM, AL",100.0,96.7,duplicate (same name + address)
+15,S2,S2-403952353,Birmingham 5tar Chiropractic Center,"1411 TWELFHT ST, BIRMINGHAM, AL",84.1,90.9,name variant at same address
+16,S1,S1-373009972,Gustafson Patriot Ubs LP,"502 Massachusetts Avenue, Lexington, MA",,,
+16,S2,S2-498244284,Gustafs0n Patriot Ubs,"502 MASSACHUSETTS AVENUE, LEXINGTON, MA",88.9,100.0,name variant at same address
+16,S2,S2-71763845,GUSTAFSON PATRIOT UBS,"502 MASSACHUSETS AVE, LEXINGTON, MA",100.0,98.6,duplicate (same name + address)
+16,S2,S2-720277039,Gustafson Patriot Ubs (LP),"502 MASSACHUSETTS AVENUE, LEXINGTON, MA",100.0,100.0,duplicate (same name + address)
+16,S3,S3-748757186,Gustafson Patriot Ubs-Lp,"02 Massachusetts Avenue, Lexingon, Massachusetts",100.0,92.8,duplicate (same name + address)
+17,S1,S1-323098173,Prime Atlantic Tankers Inc,"NY, Kingsbury, 129 Feeder Street",,,
+17,S2,S2-146453375,Prime Atlantic Inc (Tankers),"129 FEEDER STREET, HDSON FALLS CITY, NY",100.0,80.0,partial variant
+17,S2,S2-328801932,PRIME ATLANTIC TANKERS INC,"129 Feeder Street, HDSON FALLS CITY, NY",100.0,80.0,partial variant
+17,S2,S2-938673521,inc prime atlantic tankers,"FEEDER STREET, HDSON FALLS CITY, NY",100.0,69.6,partial variant
+17,S3,S3-296957639,Prime  At1antic,"129 Feeder Street, Kingsbury, New York",72.2,94.7,name variant at same address
+17,S3,S3-878107160,Prime Atlantic Tankers-Inc,"Kingsbury, New York, 129 Feeder St",100.0,94.7,duplicate (same name + address)
+18,S1,S1-446034735,Erminie Mercado Premier Armour Clinic,"NY, Plattsburgh, Unit Apartment 510, 34 Flynn Avenue",,,
+18,S2,S2-469201925,"mercado, erminie premier armour clinic","##34 FLYNN AVE, PLATTSBURGH, NY",100.0,100.0,duplicate (same name + address)
+18,S3,S3-357306548,Erminie Mercado Premier Armour Clinic Council,"Flynn Ave, Unit Apartment 510, Plattsbrgh, New York",100.0,88.0,partial variant
+18,S3,S3-901278059,Erminie Mebhcfo Premier Armour Clinic,"#34 Flynn Ave, Unit Apartment 510, Plattsbrgh, New York",91.9,91.3,duplicate (same name + address)
+19,S1,S1-828005287,Kellie Contreras Ace Skin Care LLC,"808 Kansas Street, TX, Robstown",,,
+19,S2,S2-973783564,KELLIE CONTRERAS ACE SKIN  CARE,"816 KANSAS ST, ROOBSTOWN, TX",100.0,91.5,duplicate (same name + address)
+19,S3,S3-344167824,Kellie Contreras Ace Skin LLC Services,"816 Kansas St, Robstown, Texas",90.9,88.5,partial variant
+19,S3,S3-871657896,Kellie Contreras Ace Skin Care Llc,"00808 Kansas St, Robstown, Texas",100.0,92.1,duplicate (same name + address)
+20,S1,S1-509127322,Grand Analytics Global,"Casper, 6520 Indian Wells Drive, WY",,,
+20,S2,S2-326091529,GLOBAL ÁNALYTICS GRAND,"6520 Indian Wells Drive, CASPER, WY",100.0,100.0,duplicate (same name + address)
+20,S2,S2-980757579,Grand Ánalytics Global,"6520 INDIAN WELLS DRIVE, CASPER, WY",100.0,100.0,duplicate (same name + address)
+20,S3,S3-321303163,Grand Analytics Gobla,"Indian Wells Dr, Casper Township, Wyoming",93.0,73.1,partial variant
+20,S3,S3-99611187,Umbradelta formerly: Grand Analytics Global,"6520 Indian Wells Drive, Casper, WY",100.0,100.0,duplicate (same name + address)

@@ -1,0 +1,10 @@
+metric,value
+S1 entities,2206821
+singletons %,5.58
+mean matches per non-singleton,3.67
+max matches,11
+matched IDs,7638365
+matched IDs from S2 %,48.36
+matched IDs from S3 %,51.64
+S2 records matching no S1 %,26.64
+S3 records matching no S1 %,25.37

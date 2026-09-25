@@ -1,0 +1,7 @@
+split,source,rows,entity_id empty %,business_name empty %,business_address empty %,country empty %
+train,S1,2206821,0.0,0.0,0.0,0.0
+train,S2,5034616,0.0,0.0,3.356,0.0
+train,S3,5285603,0.0,0.0,3.328,0.0
+test,S1,1732544,0.0,0.0,0.0,0.0
+test,S2,4887273,0.0,0.0,2.648,0.0
+test,S3,5082316,0.0,0.0,2.678,0.0

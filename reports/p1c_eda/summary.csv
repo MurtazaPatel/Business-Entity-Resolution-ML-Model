@@ -1,0 +1,19 @@
+fact,value
+scope,full train + full test
+train S1 / test S1 entities,"2,206,821 / 1,732,544"
+test/train ratio S1 / S2 / S3,0.79 / 0.97 / 0.96
+singletons (train),5.58%
+matches per non-singleton: mean / max,3.67 / 11
+matched IDs from S2 / S3,48.36% / 51.64%
+IDs under more than one S1,0
+true pairs whose country differs,0
+countries new in test,France (14.98% of test S1)
+empty address: train S2 / S3 / test S2 / S3,3.4% / 3.3% / 2.6% / 2.7%
+true pairs where both carry a postal code / codes agree,0.16% / 98.75% (naive digit runs: 93.49%)
+AUC name vs address (random negatives),0.976 vs 0.956
+true pairs agreeing on name only / address only,10.1% / 16.1%
+singleton traps: NN cosine >= 0.8,92.7% of singletons
+matched S1: TF-IDF NN is a true match,48.3%
+3+ match entities: extras that duplicate the S1 (name+address),52.3% of records; branch-like in 2.0% of entities
+same-source records within an entity that are near-copies,"47.0% of 10,652 pairs"
+new-country noise gaps matching train direction,17/17

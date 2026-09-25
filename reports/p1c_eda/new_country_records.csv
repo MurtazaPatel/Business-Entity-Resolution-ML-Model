@@ -1,0 +1,76 @@
+source,entity_id,business_name,business_address,country
+S1,S1-403818167,Locataires & Cie SARL,"27 Rue de l'Avenir, Pessac, Nouvelle-Aquitaine",France
+S1,S1-752404327,Circonscription Live Anciens SAS,"8 Place du Marechal de Lattre Tassigny, Tourcoing, Hauts-de-France",France
+S1,S1-907987254,Rose (France) Amicale,"38 Allée d'Orient, Mérignac, Nouvelle-Aquitaine",France
+S1,S1-879468201,Ets Personnel SASU,"6 RUE de Belfort, Appt 421, Bordeaux, Nouvelle-Aquitaine",France
+S1,S1-600112012,Institut Sainte,"45 Place de la Victoire, Tourcoing, Hauts-de-France",France
+S1,S1-350871431,Lart Club SAS,"16 Rue des Châtaigniers, Nantes, Pays de la Loire",France
+S1,S1-760103511,Union des Commune,"2 Rue de la Collégiale, Lille, Hauts-de-France",France
+S1,S1-318205655,SJ Batiment SARL,"33 bis Rue Jean Macé, Tourcoing, Hauts-de-France",France
+S1,S1-65600090,Garantir Fetes SARL,"1 Rue Hermant, Calais, Hauts-de-France",France
+S1,S1-534126555,Gel Club SA,"Tourcoing, Hauts-de-France, 45 Rue Victor Capart",France
+S1,S1-51776969,Song & Frères SAS,"29 Bis Allée Max Jacob, Saint-Herblain, Pays de la Loire",France
+S1,S1-480549933,Union de Miss,"Nouvelle-Aquitaine, 15 Rue Joséphine, Bordeaux",France
+S1,S1-479697328,Val Parents SAS,"5 Impasse des Blés d'Or, Pornic, Pays de la Loire",France
+S1,S1-58225818,École maternelle de Dame,"32 Avenue Président Joseph Bouyer, Nantes, Pays de la Loire",France
+S1,S1-952408285,Usep Sportive SASU,"999 Rue de la Caone, La Teste-de-Buch, Nouvelle-Aquitaine",France
+S1,S1-612684151,Commune Ecole,"30 Avenue Henri Briet, Roubaix, Hauts-de-France",France
+S1,S1-165864887,Centre Médical Sainte Lassociation,"19 bis Rue Lebrix Mesmin, Mérignac, Nouvelle-Aquitaine",France
+S1,S1-119838666,Detudes Primaire SAS,"207 Rue Turenne, Bordeaux, Nouvelle-Aquitaine",France
+S1,S1-486070732,Familles Parents SAS,"49 Avenue de la Baraudière, Saint-Herblain, Pays de la Loire",France
+S1,S1-352597542,Club du Superieure,"12 Rue Denis du Péage, Lille, Hauts-de-France",France
+S1,S1-191465621,Fédération de Cavaliers,"8 Rue du Chemin Neuf, Roubaix, Hauts-de-France",France
+S1,S1-264996489,Sapeurs Atelier SCI,"27 Rue des Myosotis, Mérignac, Nouvelle-Aquitaine",France
+S1,S1-282640229,Établissements Oscar SASU,"77 Rue de l'Espérance, Lille, Hauts-de-France",France
+S1,S1-683542483,Nantes Club SAS,"2 Rue Sévigné, Nantes, Pays de la Loire",France
+S1,S1-325299912,JN Sante SAS,"Hauts-de-France, 19 Rue de l' Industrie, Tourcoing",France
+S2,S2-129601201,STATUTS FOYER (FRANCE),"PORNIC, 28 TER R. DU MARÉCHAL FOCH",France
+S2,S2-415874115,S.A. Christian Comite,"23 R LOUIS CHRISTIAENS, Lille",France
+S2,S2-583814867,Choeur Energie Groupe SARL,"113 ROUTE DE VERTOU, NANTES",France
+S2,S2-201032946,BLISS PARENTS,"309 R DE CASSEL, DUNKERQUE",France
+S2,S2-168493290,NC FEDERATION S.A.R.L.,,France
+S2,S2-996845291,noel amicale sarl,"32 PACE DU PRINTEMPS, PESSAC, Nouvelle-Aquitaine",France
+S2,S2-349614027,DELTAONYXECTO,"18 R. D'ORLÉANS, Nantes",France
+S2,S2-698083524,Saint-Nazaire Primaire Participations SARL,"SAINT-NAZAIRE, Pays de la Loire, 37 ALLEE MARGARET SANGER",France
+S2,S2-980569533,ETS AMITIE INTERNATIONAL,"NANTES, 17 QUAI HCHE, Loire-Atlantique",France
+S2,S2-328968671,Domaine France SARL Cie,"N° 32 RUE DE QUEBEC, CALAIS, Pas-de-Calais",France
+S2,S2-516590016,DUNKERQUE ATELIER S.A.S.,"321 R DE DOUVRES, BAT. F - APT 424 - RES. BRITANIA II, DUNKERQUE, Hauts-de-France",France
+S2,S2-883703296,NATIONALE (FRANCE) (SERVICES),"NO. 58 AVE DU DOCTEAR ALBERT SCHWEITZER, PESSAC, Nouvelle-Aquitaine",France
+S2,S2-66514856,RENCONTRE CLUB S.A.S,"PORNIC, 2 R SINT EXUPERY, Pays de la Loire",France
+S2,S2-144216256,ZE  Primaire SAS,"5 AV OSCAR LAMBRET, 3E ETAGE PSYHUB - CHU DE LILLE, LILLE, Nord",France
+S2,S2-648969015,SARL CHASSE & FRÈRES,"2 RUE DE L’AMRIAUTE, Dunkerque, Nord",France
+S2,S2-255547626,@etsassistance,"28 RUE ALAIN COLAS, LA TESTE-DE-BUCH, Gironde",France
+S2,S2-91910134,ATHENA (FRANCE) AMIS,,France
+S2,S2-309443752,pansportsarl.com,"75 R. MAURICE, BORDEAUX, Gironde",France
+S2,S2-249086693,Team Primaire SARL,"NO 59 RUE KLBEER, TOURCOING, Hauts-de-France",France
+S2,S2-76905414,Vieux Ecole  S.A.S,"10 R. DU CHEMIN DE FER, LILLE",France
+S2,S2-22617564,Maison Guillaume SCI,"78 RUE HENRI JULLIN, NANTES, Loire-Atlantique",France
+S2,S2-323749787,Marais Edmond Parents,"5 RUE DES DENTELILÈRES, SAINT-NAZAIRE, Loire-Atlantique",France
+S2,S2-290584512,Pornic  Sante,"6 R. DE LA GRANDE OUCHE, PORNIC, Pays de la Loire",France
+S2,S2-444044940,Deleves SARL Sportive,"2 BIS AV ALBERT DE MUN, Loire-Atlantique, SAINT-NAZAIRE",France
+S2,S2-717444615,Agri Sèrvices SAS,"NO 53 R. LOUIS FRANCOIS DESURMONT, TOURCOING, Nord",France
+S3,S3-774299138,Frères Zone France,"N° 37 Corniche De Gourmalon, Pornic, Pays de la Loire",France
+S3,S3-979697962,Collège Boxing SCI,Calais,France
+S3,S3-893217466,Voile Groupement,"9 Rue Du Bazinghien, Lille, Nord",France
+S3,S3-377207006,Josselin Sportive,"9 Avenue André Danglade, Pessac, Gironde",France
+S3,S3-102211320,Eleves Centre SAS,"31 R. Des Chataigniers, Nantes, Pays de la Loire",France
+S3,S3-103424128,lycecercle.com,"Lille, Hauts-de-France, 18 R. Baudin",France
+S3,S3-264126329,Roubaix Sprt SCI,"11bis Rue Du Parc, Roubaix",France
+S3,S3-555162401,Goele Jeunes S.C.I.,"Loire-Atlantique, La Baule-escoublac, 84 Ter Boulevard Auguste Caillaud",France
+S3,S3-803875825,RIO COMPAGNIE SAS,"202 Rue Camille Godard, Bordeaux, Nouvelle-Aquitaine",France
+S3,S3-135838671,Copains &,"8 R De La Somme, Pessac, Nouvelle-Aquitaine",France
+S3,S3-684278133,Établissements Touristique SAS Cie,"29 Rue Du Caporal Delroeux, Tourcoing, Nord",France
+S3,S3-281941822,Damis Club SARL,"38 Rue D'oran, Roubaix",France
+S3,S3-548210958,MOULIN PHARMACIE SARL,"10 R. Sébastien Vaillant, Nantes, Loire-Atlantique",France
+S3,S3-920731218,Residence du Jean,"013 R Des Lignes, Roubaix, Nord",France
+S3,S3-92760495,Nantes Societe SA,"18 R Du Transvaal, Nantes, Pays de la Loire",France
+S3,S3-417528248,Protection Çollectif Groupe EURL,"19 R De L’albatros, Pornic, Pays de la Loire",France
+S3,S3-416791700,Saint-Herblain Cu Développement,"27 Impasse De La Dixnotterie, Saint-herblain",France
+S3,S3-217817796,Franklin Fils SARL Cie,,France
+S3,S3-849652175,Fosse Etablissements,"30 Bis Av De La Page, La Teste-de-buch",France
+S3,S3-101889305,Centre Hospitalier [Socio],"00226 R. Racine, Tourcoing",France
+S3,S3-681333634,Pas Collège EURL,"N° 39 Rue Des Hauts Paves, Nantes",France
+S3,S3-658979374,Moulin Pointe Amis SARL,"26 Bis Rue Brascassat, Bordeaux, Gironde",France
+S3,S3-848807298,Jardin & Frfcbfs SAS,"74 Rue Delord, Bordeaux, Gironde",France
+S3,S3-328229543,Familles Lycee,"(22) Rue Dupleix, Lille, Hauts-de-France",France
+S3,S3-380188704,Centre Hospitalier Sainte Louise SARL,"Nº 40 R. Des Montagnards, Lille, Hauts-de-France",France

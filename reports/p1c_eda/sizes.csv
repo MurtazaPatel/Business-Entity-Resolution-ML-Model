@@ -1,0 +1,5 @@
+file,train rows,test rows,test/train,train MB,test MB
+source1,2206821,1732544.0,0.785,200.3,166.9
+source2,5034616,4887273.0,0.971,466.6,485.9
+source3,5285603,5082316.0,0.962,480.4,482.6
+ground_truth,2206821,,,121.1,

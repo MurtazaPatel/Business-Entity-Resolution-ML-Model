@@ -1,0 +1,4 @@
+country,true pairs,both have code %,agree %,both 6-digit,6-digit agree %,both 5-digit,5-digit agree %,naive: both %,naive: agree %
+India,80442,0.31,98.8,148,100.0,102,97.06,0.54,98.38
+US,119558,0.06,98.59,7,100.0,64,98.44,9.19,93.29
+ALL,200000,0.16,98.75,155,100.0,166,97.59,5.71,93.49

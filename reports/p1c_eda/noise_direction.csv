@@ -1,0 +1,18 @@
+metric,source,India gap (pp),US gap (pp),new country,new gap (pp),same direction
+name: legal suffix,S2,-26.08,-2.96,France,-13.35,True
+name: legal suffix,S3,-18.67,-3.49,France,-14.04,True
+name: junk prefix,S2,1.36,2.16,France,0.84,True
+name: junk prefix,S3,1.47,2.12,France,0.79,True
+name: has digit,S2,2.75,3.59,France,0.34,True
+name: has digit,S3,3.04,3.48,France,0.34,True
+name: non-ASCII,S2,27.61,6.25,France,8.82,True
+name: non-ASCII,S3,18.21,6.39,France,8.22,True
+name: ALL CAPS,S2,14.12,20.42,France,20.8,True
+name: ALL CAPS,S3,2.47,3.2,France,5.61,True
+addr: empty,S2,2.28,2.94,France,3.06,True
+addr: empty,S3,2.46,2.84,France,2.94,True
+addr: ALL CAPS,S2,24.0,90.48,France,28.98,True
+addr: abbreviation,S2,4.38,25.32,France,36.13,True
+addr: abbreviation,S3,1.12,25.72,France,34.61,True
+addr: zero-padded number,S2,2.23,4.44,France,1.6,True
+addr: zero-padded number,S3,2.06,4.24,France,1.52,True

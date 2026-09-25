@@ -1,0 +1,11 @@
+metric,value
+true pairs / random same-country negatives,"50,000 / 50,000"
+AUC name tsr (normalized),0.9762
+AUC address tsr (normalized),0.9562
+true pairs: name AND address agree (>=80) %,71.99
+true pairs: name only agrees %,10.14
+true pairs: address only agrees %,16.12
+true pairs: neither agrees %,1.75
+true pairs: name tsr < 50 %,7.21
+true pairs: address tsr < 50 %,4.58
+true pairs: match record has no address %,4.38

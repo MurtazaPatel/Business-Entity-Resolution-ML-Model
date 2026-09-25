@@ -1,0 +1,5 @@
+assumption,verdict,evidence
+(a) each S2/S3 has at most one owner,holds,"0 of 7,638,365 matched IDs appear under more than one S1"
+(b) names carry most of the signal,partly,AUC name 0.976 vs address 0.956; true pairs agreeing on name only 10.1% vs address only 16.1%; name tsr<50 in 7.2%
+(c) postal codes are reliable when present,holds,a genuine code is on both records in only 0.16% of true pairs (n=321); they agree in 98.75% (6-digit 100.0% n=155; 5-digit 97.59% n=166). Naive digit-run matching agrees only 93.49% -- most 5/6-digit runs are house numbers.
+(d) France shows the same noise patterns in a new language,holds,17/17 S2/S3-vs-S1 noise gaps in France point the same way as in the train countries (test split). Descriptive only: France has no labels.
