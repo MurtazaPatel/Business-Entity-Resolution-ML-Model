@@ -19,6 +19,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from config import Paths, add_common_args, paths_from_args, set_seed  # noqa: E402
 import io_utils  # noqa: E402
+import eda  # noqa: E402
 
 REPORT_MAX_LINES = 200
 
@@ -43,7 +44,7 @@ def md_table(df, max_cell: int = 60) -> str:
     return "\n".join(out)
 
 
-def step_p0_load(paths: Paths, args: argparse.Namespace) -> list[str]:
+def step_p1a_check(paths: Paths, args: argparse.Namespace) -> list[str]:
     """Shape, columns and 3 sample rows for each of the 7 given files."""
     lines: list[str] = []
     for name, path in paths.all_sources().items():
@@ -72,13 +73,26 @@ def step_p0_load(paths: Paths, args: argparse.Namespace) -> list[str]:
     return lines
 
 
-STEPS = {"p0_load": step_p0_load}
+def step_p1_eda(paths: Paths, args: argparse.Namespace) -> list[str]:
+    """Dataset facts that decide the blocking and matching design."""
+    return eda.run(paths, args)
+
+
+# p1a_check is the canonical id; p0_load stays as an alias so the existing report and
+# any notebook already pointing at it keep working.
+STEPS = {
+    "p1a_check": step_p1a_check,
+    "p0_load": step_p1a_check,
+    "p1_eda": step_p1_eda,
+}
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Run one pipeline step.")
     parser.add_argument("--step", required=True, choices=sorted(STEPS), help="Step id to run.")
     parser.add_argument("--no-report", action="store_true", help="Print only; skip reports/<id>.md.")
+    parser.add_argument("--probe", type=int, default=200_000,
+                        help="Sample size for the per-pair blocking probes (p1_eda).")
     add_common_args(parser)
     args = parser.parse_args()
 
