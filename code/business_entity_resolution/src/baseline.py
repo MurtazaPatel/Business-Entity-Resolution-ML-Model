@@ -17,6 +17,7 @@ The surviving comparisons are exactly what candidate_pairs.tsv reports.
 from __future__ import annotations
 
 import os
+import resource
 import time
 from dataclasses import dataclass, field
 
@@ -50,6 +51,24 @@ WORKER_CHUNK = 20_000
 
 def core_names(names) -> list[str]:
     return [nz.core_name(x) for x in names]
+
+
+def rss_gb() -> float:
+    """Resident set size. maxrss is bytes on macOS, kilobytes on Linux."""
+    rss = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
+    return rss / 1024**3 if os.uname().sysname == "Darwin" else rss / 1024**2
+
+
+def split_pool_by_country(pool: pd.DataFrame) -> dict[str, tuple[np.ndarray, np.ndarray]]:
+    """{country: (ids, names)} so the caller can free the DataFrame before searching.
+
+    The pooled frame is ~10.3M rows; holding it alongside the index and the forked
+    workers is exactly the peak we do not need.
+    """
+    country = pool["country"].astype(str).to_numpy()
+    ids = pool["entity_id"].astype(str).to_numpy()
+    names = pool["business_name"].astype(str).to_numpy()
+    return {c: (ids[country == c], names[country == c]) for c in np.unique(country)}
 
 
 @dataclass
@@ -206,12 +225,14 @@ def _search(index: "CountryIndex", names: np.ndarray, k: int, jobs: int,
         _SHARED_INDEX = None
 
 
-def generate_candidates(queries: pd.DataFrame, pool: pd.DataFrame, k: int = TOP_K,
+def generate_candidates(queries: pd.DataFrame, pool, k: int = TOP_K,
                         max_df: float = MAX_DF, jobs: int = 1, chunk: int = QUERY_CHUNK,
-                        log=print) -> Candidates:
+                        log=print, progress_every: float = 60.0) -> Candidates:
     """Top-k candidates for every S1 in `queries`, country by country.
 
-    `queries` needs entity_id/business_name/country; `pool` is the S2+S3 records.
+    `queries` needs entity_id/business_name/country. `pool` is the S2+S3 records, either
+    as a DataFrame or as the {country: (ids, names)} mapping from split_pool_by_country,
+    which lets the caller free the frame first.
     """
     rows_s1, rows_other, rows_score, rows_rank = [], [], [], []
     n_no_cand = 0
@@ -220,12 +241,12 @@ def generate_candidates(queries: pd.DataFrame, pool: pd.DataFrame, k: int = TOP_
     q_country = queries["country"].astype(str).to_numpy()
     q_ids = queries["entity_id"].astype(str).to_numpy()
     q_names = queries["business_name"].astype(str).to_numpy()
-    p_country = pool["country"].astype(str).to_numpy()
+    by_country = pool if isinstance(pool, dict) else split_pool_by_country(pool)
 
     for country in sorted(set(q_country)):
         qm = q_country == country
-        pm = p_country == country
-        n_q, n_p = int(qm.sum()), int(pm.sum())
+        p_ids, p_names = by_country.get(country, (np.empty(0), np.empty(0)))
+        n_q, n_p = int(qm.sum()), len(p_ids)
         if n_q == 0:
             continue
         if n_p == 0:
@@ -235,26 +256,38 @@ def generate_candidates(queries: pd.DataFrame, pool: pd.DataFrame, k: int = TOP_
             log(f"  {country}: {n_q:,} queries, empty pool -> no candidates")
             continue
 
+        log(f"  {country}: building index over {n_p:,} records "
+            f"({n_q:,} queries, RSS {rss_gb():.1f} GB)")
         t0 = time.perf_counter()
-        index = CountryIndex.build(
-            country,
-            pool.loc[pm, "entity_id"].astype(str).to_numpy(),
-            pool.loc[pm, "business_name"].astype(str).to_numpy(),
-            max_df=max_df,
-        )
+        index = CountryIndex.build(country, p_ids, p_names, max_df=max_df)
         built = time.perf_counter() - t0
+        log(f"  {country}: index ready in {built:.0f}s "
+            f"(vocab {index.vocab:,}, {index.nnz_per_doc:.1f} nnz/doc, RSS {rss_gb():.1f} GB)"
+            f" -- searching with {jobs} job(s)")
 
         t0 = time.perf_counter()
         ids_q = q_ids[qm]
         local_no_cand = 0
+        done, last = 0, time.perf_counter()
         for r, cand_ids, val in _search(index, q_names[qm], k, jobs, chunk=chunk):
-            if not cand_ids:
+            done += 1
+            if cand_ids:
+                rows_s1.extend([ids_q[r]] * len(cand_ids))
+                rows_other.extend(cand_ids)
+                rows_score.extend(val)
+                rows_rank.extend(range(1, len(cand_ids) + 1))
+            else:
                 local_no_cand += 1
-                continue
-            rows_s1.extend([ids_q[r]] * len(cand_ids))
-            rows_other.extend(cand_ids)
-            rows_score.extend(val)
-            rows_rank.extend(range(1, len(cand_ids) + 1))
+            # Without this a country is silent for minutes and a hang is
+            # indistinguishable from progress.
+            now = time.perf_counter()
+            if now - last >= progress_every:
+                el = now - t0
+                rate = done / el
+                log(f"    {country}: {done:,}/{n_q:,} ({100 * done / n_q:.0f}%) "
+                    f"{1000 / rate:.1f}s/1k, ETA {(n_q - done) / rate / 60:.0f} min, "
+                    f"RSS {rss_gb():.1f} GB")
+                last = now
         searched = time.perf_counter() - t0
 
         n_no_cand += local_no_cand

@@ -67,7 +67,8 @@ def run(paths, args) -> list[str]:
     _log(f"tuning pool: {len(s1_eval):,} S1 entities")
 
     _log("building train candidates")
-    pool = _pool(paths, "train")
+    pool = B.split_pool_by_country(_pool(paths, "train"))   # frame freed before searching
+    _log(f"pool by country: {', '.join(f'{c} {len(v[0]):,}' for c, v in sorted(pool.items()))}")
     cands = B.generate_candidates(s1_eval, pool, k=k, max_df=max_df, jobs=jobs, chunk=chunk, log=_log)
     del pool
     _log(f"candidates: {len(cands.frame):,} pairs")
@@ -148,7 +149,8 @@ def run(paths, args) -> list[str]:
     if not getattr(args, "skip_test", False):
         _log("test inference")
         test_s1 = read_source(paths.test_s1)[cols]
-        test_pool = _pool(paths, "test")
+        test_pool = B.split_pool_by_country(_pool(paths, "test"))
+        _log(f"test pool: {', '.join(f'{c} {len(v[0]):,}' for c, v in sorted(test_pool.items()))}")
         tc = B.generate_candidates(test_s1, test_pool, k=k, max_df=max_df, jobs=jobs, chunk=chunk, log=_log)
         del test_pool
 

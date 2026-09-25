@@ -83,6 +83,52 @@ class TestCandidateGeneration:
         assert ((c.frame["score"] >= -1e-6) & (c.frame["score"] <= 1 + 1e-6)).all()
 
 
+class TestProgressLogging:
+    """A long search must report progress; silence made a healthy run look hung."""
+
+    def _run(self, progress_every):
+        lines = []
+        B.generate_candidates(query_frame(), pool_frame(), k=5, max_df=1.0,
+                              log=lines.append, progress_every=progress_every)
+        return lines
+
+    def test_index_build_is_announced_before_it_starts(self):
+        """The build is the longest silent stretch, so it is logged up front."""
+        lines = self._run(60.0)
+        assert any("building index over" in x for x in lines)
+        assert any("index ready in" in x for x in lines)
+        # announced before the per-country summary that follows the search
+        assert (next(i for i, x in enumerate(lines) if "building index" in x)
+                < next(i for i, x in enumerate(lines) if "no candidate" in x))
+
+    def test_progress_lines_carry_percent_rate_and_eta(self):
+        lines = [x for x in self._run(0.0) if "%" in x and "ETA" in x]
+        assert lines, "no progress lines emitted"
+        assert "s/1k" in lines[0] and "RSS" in lines[0]
+
+    def test_progress_is_silent_when_the_interval_is_long(self):
+        assert not [x for x in self._run(3600.0) if "ETA" in x]
+
+
+class TestPoolSplitting:
+    def test_split_groups_ids_and_names_by_country(self):
+        by_c = B.split_pool_by_country(pool_frame())
+        assert set(by_c) == {"India", "US", "France"}
+        ids, names = by_c["France"]
+        assert list(ids) == ["S2-9"] and list(names) == ["Marina Ecole France Sarl"]
+
+    def test_generate_candidates_accepts_the_split_mapping(self):
+        """Callers pre-split so the 10.3M-row frame can be freed before searching."""
+        a = B.generate_candidates(query_frame(), pool_frame(), k=3, max_df=1.0,
+                                  log=lambda *_: None).frame
+        b = B.generate_candidates(query_frame(), B.split_pool_by_country(pool_frame()),
+                                  k=3, max_df=1.0, log=lambda *_: None).frame
+        assert a.equals(b)
+
+    def test_rss_is_positive(self):
+        assert B.rss_gb() > 0
+
+
 class TestTwoStageMatchesExact:
     def _pool(self, n=400, seed=0):
         rng = np.random.default_rng(seed)
