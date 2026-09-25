@@ -40,6 +40,7 @@ def run(paths, args) -> list[str]:
     max_df = getattr(args, "max_df", B.MAX_DF)
     cv_sample = getattr(args, "cv_sample", 200_000)
     jobs = getattr(args, "jobs", 1) or 1
+    chunk = getattr(args, "query_chunk", B.QUERY_CHUNK) or B.QUERY_CHUNK
     t_start = time.perf_counter()
 
     cols = ["entity_id", "business_name", "country"]
@@ -67,7 +68,7 @@ def run(paths, args) -> list[str]:
 
     _log("building train candidates")
     pool = _pool(paths, "train")
-    cands = B.generate_candidates(s1_eval, pool, k=k, max_df=max_df, jobs=jobs, log=_log)
+    cands = B.generate_candidates(s1_eval, pool, k=k, max_df=max_df, jobs=jobs, chunk=chunk, log=_log)
     del pool
     _log(f"candidates: {len(cands.frame):,} pairs")
 
@@ -148,7 +149,7 @@ def run(paths, args) -> list[str]:
         _log("test inference")
         test_s1 = read_source(paths.test_s1)[cols]
         test_pool = _pool(paths, "test")
-        tc = B.generate_candidates(test_s1, test_pool, k=k, max_df=max_df, jobs=jobs, log=_log)
+        tc = B.generate_candidates(test_s1, test_pool, k=k, max_df=max_df, jobs=jobs, chunk=chunk, log=_log)
         del test_pool
 
         all_ids = test_s1["entity_id"].astype(str).tolist()

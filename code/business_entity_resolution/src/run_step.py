@@ -130,6 +130,8 @@ def main() -> int:
                         help="Tune and score only; do not run test inference (p2b).")
     parser.add_argument("--jobs", type=int, default=1,
                         help="Parallel search workers (p2b). Use the core count on Kaggle.")
+    parser.add_argument("--query-chunk", type=int, default=500,
+                        help="Queries per sparse product (p2b). Lower this if RAM is tight.")
     parser.add_argument("--probe", type=int, default=200_000,
                         help="Sample size for the per-pair blocking probes (p1_eda).")
     add_common_args(parser)

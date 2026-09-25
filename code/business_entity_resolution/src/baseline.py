@@ -39,7 +39,12 @@ RARE_TRIGRAMS = 0
 RESCORE_N = 50
 MIN_DF = 3
 NGRAM = (3, 3)
-QUERY_CHUNK = 2000
+# Peak memory is driven by the sparse product for one chunk, not by the index. At
+# max_df=0.01 the US pool averages ~143k non-zeros per query, i.e. ~1.1 MB per query at
+# 8 bytes each (float32 value + int32 column), so a chunk of 500 costs ~0.5 GB per worker
+# and 4 workers stay near 2 GB. A chunk of 2000 would be 8.5 GB across 4 workers, which is
+# enough to fall over on a smaller box.
+QUERY_CHUNK = 500
 WORKER_CHUNK = 20_000
 
 
@@ -161,10 +166,10 @@ _SHARED_INDEX: "CountryIndex | None" = None
 
 
 def _topk_worker(job):
-    start, names, k, rare, rescore_n = job
+    start, names, k, rare, rescore_n, chunk = job
     ix = _SHARED_INDEX
     out = []
-    for r, idx, val in ix.topk(names, k=k, rare=rare, rescore_n=rescore_n):
+    for r, idx, val in ix.topk(names, k=k, chunk=chunk, rare=rare, rescore_n=rescore_n):
         if len(idx):
             out.append((start + r, ix.ids[idx].tolist(), val.tolist()))
         else:
@@ -173,10 +178,11 @@ def _topk_worker(job):
 
 
 def _search(index: "CountryIndex", names: np.ndarray, k: int, jobs: int,
-            rare: int = RARE_TRIGRAMS, rescore_n: int = RESCORE_N):
+            rare: int = RARE_TRIGRAMS, rescore_n: int = RESCORE_N,
+            chunk: int = QUERY_CHUNK):
     """Yield (row, candidate_ids, scores). Uses forked workers when jobs > 1."""
     if jobs <= 1:
-        for r, idx, val in index.topk(names, k=k, rare=rare, rescore_n=rescore_n):
+        for r, idx, val in index.topk(names, k=k, chunk=chunk, rare=rare, rescore_n=rescore_n):
             yield r, index.ids[idx].tolist() if len(idx) else [], val.tolist()
         return
 
@@ -184,13 +190,13 @@ def _search(index: "CountryIndex", names: np.ndarray, k: int, jobs: int,
 
     global _SHARED_INDEX
     _SHARED_INDEX = index
-    jobs_list = [(s, names[s:s + WORKER_CHUNK], k, rare, rescore_n)
+    jobs_list = [(s, names[s:s + WORKER_CHUNK], k, rare, rescore_n, chunk)
                  for s in range(0, len(names), WORKER_CHUNK)]
     try:
         ctx = mp.get_context("fork")
     except ValueError:                      # no fork (Windows/macOS spawn): stay serial
         _SHARED_INDEX = None
-        yield from _search(index, names, k, 1, rare, rescore_n)
+        yield from _search(index, names, k, 1, rare, rescore_n, chunk)
         return
     try:
         with ctx.Pool(jobs) as pool:
@@ -201,7 +207,8 @@ def _search(index: "CountryIndex", names: np.ndarray, k: int, jobs: int,
 
 
 def generate_candidates(queries: pd.DataFrame, pool: pd.DataFrame, k: int = TOP_K,
-                        max_df: float = MAX_DF, jobs: int = 1, log=print) -> Candidates:
+                        max_df: float = MAX_DF, jobs: int = 1, chunk: int = QUERY_CHUNK,
+                        log=print) -> Candidates:
     """Top-k candidates for every S1 in `queries`, country by country.
 
     `queries` needs entity_id/business_name/country; `pool` is the S2+S3 records.
@@ -240,7 +247,7 @@ def generate_candidates(queries: pd.DataFrame, pool: pd.DataFrame, k: int = TOP_
         t0 = time.perf_counter()
         ids_q = q_ids[qm]
         local_no_cand = 0
-        for r, cand_ids, val in _search(index, q_names[qm], k, jobs):
+        for r, cand_ids, val in _search(index, q_names[qm], k, jobs, chunk=chunk):
             if not cand_ids:
                 local_no_cand += 1
                 continue
