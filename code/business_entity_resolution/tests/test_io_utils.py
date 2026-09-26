@@ -136,3 +136,53 @@ def test_output_passes_the_official_validator(tmp_path: Path):
     combined = r.stdout + r.stderr
     for forbidden in ("TAB", "unexpected header", "malformed row", "repeated ID", "does not exist"):
         assert forbidden not in combined, combined
+
+
+class TestGzipRoundTrip:
+    """The gzipped submission is how a Kaggle run's predictions reach the repo."""
+
+    def test_round_trip_is_byte_identical(self, tmp_path):
+        p = tmp_path / "matching_results.tsv"
+        p.write_text("source1_entity_id\tmatched_entity_ids\n"
+                     "S1-1\tS2-47,S3-812\nS1-2\t\n", encoding="utf-8")
+        original = p.read_bytes()
+        gz = io_utils.gzip_file(p)
+        assert gz.name == "matching_results.tsv.gz" and gz.exists()
+        p.unlink()
+        out = io_utils.gunzip_file(gz)
+        assert out == p and out.read_bytes() == original
+
+    def test_gzip_keeps_the_source_by_default(self, tmp_path):
+        p = tmp_path / "x.tsv"
+        p.write_text("a\tb\n", encoding="utf-8")
+        io_utils.gzip_file(p)
+        assert p.exists()
+
+    def test_gzip_can_replace_the_source(self, tmp_path):
+        p = tmp_path / "x.tsv"
+        p.write_text("a\tb\n", encoding="utf-8")
+        io_utils.gzip_file(p, keep=False)
+        assert not p.exists()
+
+    def test_gunzip_rejects_a_non_gz_path(self, tmp_path):
+        p = tmp_path / "x.tsv"
+        p.write_text("a\n", encoding="utf-8")
+        with pytest.raises(ValueError, match="not a .gz"):
+            io_utils.gunzip_file(p)
+
+    def test_expanded_submission_still_passes_the_validator(self, tmp_path):
+        """Compression must not disturb the exact format the validator checks."""
+        validator = REPO_ROOT / "utils" / "validate_submission.py"
+        test_dir = REPO_ROOT / "dataset" / "test"
+        if not validator.exists() or not test_dir.exists():
+            pytest.skip("validator or test data not present")
+
+        s1 = io_utils.read_source(test_dir / "test_source1.tsv", nrows=3)["entity_id"].tolist()
+        s2 = io_utils.read_source(test_dir / "test_source2.tsv", nrows=2)["entity_id"].tolist()
+        df = pd.DataFrame({"source1_entity_id": s1, "matched_entity_ids": [s2, [s2[0]], []]})
+        m = io_utils.write_submission(df, tmp_path / "matching_results.tsv", "matched")
+        before = m.read_bytes()
+        gz = io_utils.gzip_file(m)
+        m.unlink()
+        after = io_utils.gunzip_file(gz).read_bytes()
+        assert after == before

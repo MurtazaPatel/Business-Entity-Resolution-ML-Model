@@ -171,6 +171,36 @@ def write_submission(df: pd.DataFrame, path: str | Path, col_label: str = "match
     return path
 
 
+def gzip_file(path: str | Path, level: int = 6, keep: bool = True) -> Path:
+    """Write `path`.gz beside `path`. Level 6 -- level 9 saves <1% here for 2.5x the time."""
+    import gzip
+    import shutil
+
+    path = Path(path)
+    out = path.with_suffix(path.suffix + ".gz")
+    with open(path, "rb") as src, gzip.open(out, "wb", compresslevel=level) as dst:
+        shutil.copyfileobj(src, dst, length=1 << 20)
+    if not keep:
+        path.unlink()
+    return out
+
+
+def gunzip_file(path: str | Path, keep: bool = True) -> Path:
+    """Expand `x.tsv.gz` back to `x.tsv`."""
+    import gzip
+    import shutil
+
+    path = Path(path)
+    if path.suffix != ".gz":
+        raise ValueError(f"not a .gz file: {path}")
+    out = path.with_suffix("")
+    with gzip.open(path, "rb") as src, open(out, "wb") as dst:
+        shutil.copyfileobj(src, dst, length=1 << 20)
+    if not keep:
+        path.unlink()
+    return out
+
+
 def load_sample(paths, n: int, seed: int = SEED) -> dict[str, pd.DataFrame]:
     """Smoke-run slice: n train S1 entities, their true matches, plus random S2/S3 filler.
 

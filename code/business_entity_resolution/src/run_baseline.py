@@ -13,7 +13,7 @@ import pandas as pd
 
 import baseline as B
 import splits as S
-from io_utils import parse_id_list, read_source, write_submission
+from io_utils import gzip_file, parse_id_list, read_source, write_submission
 from metrics import macro_f05
 from report import md_table
 
@@ -163,6 +163,11 @@ def run(paths, args) -> list[str]:
                                 "matched_entity_ids": [pred_map.get(i, []) for i in all_ids]})
         write_submission(cand_df, paths.candidate_pairs, "candidate")
         write_submission(pred_df, paths.matching_results, "matched")
+        # A gzipped copy of the scored file travels back through git; output/*.tsv itself
+        # is gitignored, which is how the first full run's predictions got stranded on
+        # Kaggle. candidate_pairs is not compressed here -- it is only needed for the
+        # final zip, and committing both would add ~96 MB per run.
+        gz = gzip_file(paths.matching_results)
         n_pred = sum(len(v) for v in pred_map.values())
         lines += [
             "#### Test submission", "",
@@ -173,7 +178,12 @@ def run(paths, args) -> list[str]:
                 ("S1 with a prediction", len(pred_map)),
                 ("S1 predicted empty", len(all_ids) - len(pred_map)),
                 ("S1 predicted empty %", round(100 * (len(all_ids) - len(pred_map)) / len(all_ids), 2)),
+                ("matching_results.tsv MB", round(paths.matching_results.stat().st_size / 1024**2, 1)),
+                ("matching_results.tsv.gz MB", round(gz.stat().st_size / 1024**2, 1)),
             ], columns=["metric", "value"], dtype=object)), "",
+            f"Submittable file is committed as `output/{gz.name}`; expand with "
+            "`python -c \"import sys; sys.path.insert(0,'code/business_entity_resolution/src'); "
+            "import io_utils; io_utils.gunzip_file('output/matching_results.tsv.gz')\"`.", "",
         ]
         _log(f"wrote {paths.matching_results} and {paths.candidate_pairs}")
 
