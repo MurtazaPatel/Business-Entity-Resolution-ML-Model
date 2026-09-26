@@ -128,6 +128,9 @@ def main() -> int:
                         help="S1 entities used to tune the threshold (p2b); 0 = all.")
     parser.add_argument("--skip-test", action="store_true",
                         help="Tune and score only; do not run test inference (p2b).")
+    parser.add_argument("--threshold", type=float, default=None,
+                        help="Skip tuning/CV/LOCO and predict with this cosine "
+                             "threshold (p2b). Use a value an earlier run measured.")
     parser.add_argument("--jobs", type=int, default=1,
                         help="Parallel search workers (p2b). Use the core count on Kaggle.")
     parser.add_argument("--query-chunk", type=int, default=500,
