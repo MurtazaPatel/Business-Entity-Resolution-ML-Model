@@ -31,17 +31,31 @@ def _pool(paths, split: str) -> pd.DataFrame:
     a, b = ((paths.train_s2, paths.train_s3) if split == "train"
             else (paths.test_s2, paths.test_s3))
     cols = ["entity_id", "business_name", "country"]
+    return pd.concat([read_source(a)[cols], read_source(b)[cols]], ignore_index=True)
+
+
+def run(paths, args) -> list[str]:
+    seed = args.seed
+    k = getattr(args, "top_k", B.TOP_K)
+    max_df = getattr(args, "max_df", B.MAX_DF)
+    cv_sample = getattr(args, "cv_sample", 200_000)
+    jobs = getattr(args, "jobs", 1) or 1
+    chunk = getattr(args, "query_chunk", B.QUERY_CHUNK) or B.QUERY_CHUNK
+    fixed_thr = getattr(args, "threshold", None)
+    t_start = time.perf_counter()
+
+    cols = ["entity_id", "business_name", "country"]
     lines: list[str] = []
     thr = fixed_thr
 
     if fixed_thr is not None:
-        # Straight to inference with a threshold we already measured. Tuning cost ~1h of
-        # the first full run and produced a single scalar; re-deriving it buys nothing.
+        # Straight to inference with a threshold an earlier run already measured. Tuning
+        # cost ~1.3h of the first full run to produce one scalar; repeating it buys nothing.
         _log(f"threshold fixed at {fixed_thr} -- skipping tuning, CV and LOCO")
         lines += [f"**config:** char {B.NGRAM[0]}-gram TF-IDF on core_name, top-{k} by "
                   f"cosine, max_df={max_df}. Threshold **{fixed_thr}** supplied via "
-                  "`--threshold`; tuning, CV and LOCO skipped (see an earlier "
-                  "`p2b_baseline` report for those).", ""]
+                  "`--threshold`; tuning, CV and LOCO skipped -- see an earlier "
+                  "`p2b_baseline` report for those.", ""]
     else:
         s1 = read_source(paths.train_s1)[cols]
         gt = read_source(paths.train_gt)
@@ -68,8 +82,7 @@ def _pool(paths, split: str) -> pd.DataFrame:
         _log("building train candidates")
         pool = B.split_pool_by_country(_pool(paths, "train"))   # frame freed before searching
         _log(f"pool by country: {', '.join(f'{c} {len(v[0]):,}' for c, v in sorted(pool.items()))}")
-        cands = B.generate_candidates(s1_eval, pool, k=k, max_df=max_df, jobs=jobs,
-                                      chunk=chunk, log=_log)
+        cands = B.generate_candidates(s1_eval, pool, k=k, max_df=max_df, jobs=jobs, chunk=chunk, log=_log)
         del pool
         _log(f"candidates: {len(cands.frame):,} pairs")
 
@@ -78,6 +91,7 @@ def _pool(paths, split: str) -> pd.DataFrame:
         thr = B.best_threshold(tuning)
         _log(f"best threshold {thr}")
 
+        # --- CV: tune on the training folds, score the held-out fold --------------
         cv_rows = []
         for fold in sorted(folds["fold"].unique()):
             tr_mask, va_mask = S.fold_masks(folds, fold)
@@ -104,6 +118,7 @@ def _pool(paths, split: str) -> pd.DataFrame:
         cv = pd.concat([cv, pd.DataFrame([mean_row])], ignore_index=True)
         _log(f"CV macro F0.5 {mean_row['macro F0.5']}")
 
+        # --- LOCO ----------------------------------------------------------------
         loco_rows = []
         for spl in S.loco_splits(folds):
             tr_m, ev_m = S.loco_masks(folds, spl)
