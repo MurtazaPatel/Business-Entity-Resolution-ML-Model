@@ -15,7 +15,7 @@ imply for p3. Every figure here comes from a full-data run recorded in `reports/
 | Tests | **142 passing** — `.venv/bin/python -m pytest code/business_entity_resolution/tests/ -q` |
 | Steps done | p1a_check, p1b_eda, p1c_eda, p2a_splits, p2b_baseline |
 | Best CV | **macro F0.5 0.3269** (name-only TF-IDF baseline) |
-| Leaderboard | **not yet submitted** — see §6 |
+| **Public leaderboard** | **0.269** — baseline submitted 2026-09-27 |
 
 Everything runs through one entry point:
 
@@ -117,7 +117,10 @@ that help one usually hurt the other.
 - LOCO: `US→India` and `India→US`, derived from the labels present in the data so France needs
   no code change.
 
-**Pick models by CV + LOCO, not the leaderboard** (it scores only a subset of test).
+**Weight LOCO above CV.** `CLAUDE.md` says pick models by CV + LOCO rather than the public
+leaderboard, and that still holds — but the p2b submission showed LOCO is the more honest of
+the two: LOCO US→India predicted the leaderboard to within 0.003, while CV overstated it by
+0.058 (§6). CV never sees an unseen country; LOCO is the only proxy for France.
 
 ---
 
@@ -129,6 +132,7 @@ Char 3-gram TF-IDF on `core_name`, top-5 by cosine per S1 within country, one gl
 | | |
 |---|---|
 | CV macro F0.5 | **0.3269** (folds 0.3255–0.3288) |
+| **public leaderboard** | **0.269** |
 | singletons / non-singletons | 0.1358 / 0.3383 |
 | LOCO India→US / US→India | 0.3674 / **0.2660** |
 | blocking pair-recall | 35.4%; only 57.8% of entities get ≥1 true candidate |
@@ -143,10 +147,32 @@ Char 3-gram TF-IDF on `core_name`, top-5 by cosine per S1 within country, one gl
 The 3.9% vs 5.6% gap is pure false merges on singletons, which is why the singleton bucket
 scores 0.136 where predict-nothing scores 1.0.
 
-**No submission has been scored yet.** The run wrote a valid file twice, but the Kaggle session
-was recycled before it could be retrieved (see §8). The fix is in place: the step now gzips
-`matching_results.tsv` and the runner commits `output/matching_results.tsv.gz`, so `git pull`
-yields a submittable file. Expand with `io_utils.gunzip_file(...)` or `gunzip -k`.
+### The CV → leaderboard gap is the most useful number we have
+
+CV said **0.3269**; the public leaderboard says **0.269** — a **0.058 shortfall, 17.7% relative**.
+Two readings, and they point the same way:
+
+- **France is carrying most of the loss.** Test is 15.0% France. If France scored ~0 and the
+  seen countries scored at CV, the expected leaderboard would be
+  `0.850 × 0.3269 = 0.278` — against 0.269 actual. Inverting it: if France scores 0, the seen
+  countries imply **0.3164**, only 0.0105 below CV. That is a small, ordinary train→test shift.
+- **The leaderboard matches the harder LOCO direction almost exactly.** LOCO US→India scored
+  **0.2660** versus the leaderboard's 0.2690 — a 0.003 difference. LOCO was the only honest
+  estimate we had for an unseen country, and it was right.
+
+These cannot be separated from a single leaderboard number, and the public board scores only a
+subset of test. But both say the same thing: **the loss is concentrated in cross-country
+transfer, not in the matcher being uniformly worse.**
+
+**The likely mechanism is the threshold, not the features.** `0.975` was tuned on US+India
+cosine distributions. Each country's TF-IDF index is fit on that country's own pool, so France's
+IDF weights — and therefore its whole cosine scale — differ from anything the threshold ever
+saw. An absolute cosine cutoff does not transfer. A decision rule read from the observed score
+*distribution* (a percentile, or a per-entity margin between best and second-best) would
+transfer, and reads no country label.
+
+**Discount CV by roughly this much when predicting the leaderboard.** Any future CV number
+should be expected to land ~0.01 lower on seen countries, plus whatever France gives up.
 
 ---
 
@@ -165,11 +191,16 @@ The measurements point one way: **the name is exhausted, the address and exclusi
 3. **Exploit exclusivity.** Each S2/S3 record belongs to at most one S1 — verified on all
    7,638,365 pairs. Add a global assignment or mutual-best step after scoring; 37–48% of
    nearest neighbours are already owned by another S1.
-4. **Tune the decision for F0.5, per entity.** A false positive costs 2× a miss, and singletons
-   are 5.58% of the average. Consider a per-entity "predict empty" decision rather than one
-   global cosine threshold.
-5. **Check LOCO every time.** US→India already drops to 0.266 against 0.367 the other way, so
-   thresholds transfer badly between countries — and France was never validated at all.
+4. **Make the decision rule distribution-relative, not an absolute cutoff.** This is now
+   evidence-backed, not speculation: the 0.058 CV→leaderboard gap is consistent with France
+   scoring near zero under a threshold tuned on US+India cosine scales (see §6). Use a
+   percentile of the observed score distribution, or a per-entity margin between the best and
+   second-best candidate. Neither reads the country label. A false positive costs 2× a miss and
+   singletons are 5.58% of the average, so a per-entity "predict empty" decision is likely
+   worth more than any single global number.
+5. **Trust LOCO over CV.** LOCO US→India predicted the leaderboard to within 0.003 (0.2660 vs
+   0.2690) while CV overstated it by 0.058. Treat LOCO as the headline metric for anything
+   that will be scored on test.
 
 ---
 
